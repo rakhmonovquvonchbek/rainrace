@@ -403,7 +403,7 @@
     sky.addColorStop(0, "#0a1422");
     sky.addColorStop(1, "#141c28");
     ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, w, h * 0.38);
+    ctx.fillRect(0, 0, w, h * 0.32);
 
     var road = ctx.createLinearGradient(0, h * 0.32, 0, h);
     road.addColorStop(0, "#1a2230");
@@ -411,19 +411,19 @@
     road.addColorStop(1, "#0b0f16");
     ctx.fillStyle = road;
     ctx.beginPath();
-    ctx.moveTo(0, h * 0.34);
-    ctx.lineTo(w, h * 0.34);
+    ctx.moveTo(0, h * 0.32);
+    ctx.lineTo(w, h * 0.32);
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
     ctx.fill();
 
-    var shine = ctx.createLinearGradient(0, h * 0.34, 0, h);
+    var shine = ctx.createLinearGradient(0, h * 0.32, 0, h);
     shine.addColorStop(0, "rgba(80, 140, 160, 0.05)");
     shine.addColorStop(0.35, "rgba(62, 240, 197, 0.035)");
     shine.addColorStop(1, "rgba(0,0,0,0.25)");
     ctx.fillStyle = shine;
-    ctx.fillRect(0, h * 0.34, w, h * 0.66);
+    ctx.fillRect(0, h * 0.32, w, h * 0.68);
 
     var bandX = ((t * 40) % (w + 160)) - 80;
     var spec = ctx.createLinearGradient(bandX, 0, bandX + 180, 0);
@@ -436,8 +436,8 @@
     var speed = game.player ? game.player.speed : 0.35;
     this.scroll += speed * 42 * game.dt;
     var lanes = 4;
-    var roadTop = h * 0.4;
-    var roadBot = h * 0.92;
+    var roadTop = h * 0.32;
+    var roadBot = h * 0.94;
     var laneH = (roadBot - roadTop) / lanes;
     var i;
     ctx.save();
@@ -559,9 +559,15 @@
 
     ctx.save();
     ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, monospace";
-    ctx.fillStyle = you ? "#3ef0c5" : "rgba(197, 205, 219, 0.7)";
-    ctx.textAlign = "center";
-    ctx.fillText(label, x + jx, y + jy - 22 * scale);
+    ctx.fillStyle = you ? "#3ef0c5" : "rgba(197, 205, 219, 0.78)";
+    ctx.textBaseline = "middle";
+    if (x < 86) {
+      ctx.textAlign = "left";
+      ctx.fillText(label, x + jx + 30 * scale, y + jy);
+    } else {
+      ctx.textAlign = "right";
+      ctx.fillText(label, x + jx - 30 * scale, y + jy);
+    }
     ctx.restore();
   };
 
@@ -605,15 +611,8 @@
     }
 
     var wpms = history.map(function (h) { return h.wpm; });
-    var min = Math.min.apply(null, wpms);
-    var max = Math.max.apply(null, wpms);
-    if (max - min < 8) {
-      min = Math.max(0, min - 6);
-      max = max + 6;
-    } else {
-      min = Math.max(0, min - (max - min) * 0.12);
-      max = max + (max - min) * 0.12;
-    }
+    var min = 0;
+    var max = Math.max(80, Math.max.apply(null, wpms) * 1.12);
 
     ctx.fillStyle = "#5c6578";
     ctx.font = "10px ui-monospace, monospace";
@@ -723,7 +722,7 @@
       cars.push({
         progress: this.ais[i].distance / len,
         color: this.ais[i].color,
-        scale: 0.92,
+        scale: 0.72,
         joltX: 0,
         joltY: 0,
         rot: 0,
@@ -735,7 +734,7 @@
     cars.push({
       progress: this.player.distance / len,
       color: "#3ef0c5",
-      scale: 1.08,
+      scale: 0.84,
       joltX: this.player.joltX,
       joltY: this.player.joltY,
       rot: this.player.rot,
@@ -1060,7 +1059,7 @@
 
     if (this.charIndex < word.length) {
       var span = letters[this.charIndex];
-      if (ch === word[this.charIndex]) {
+      if (ch.toLowerCase() === word[this.charIndex]) {
         span.classList.remove("incorrect", "missed");
         span.classList.add("correct");
         this.correctKeys += 1;
@@ -1174,7 +1173,7 @@
     if (!this.started) return 0;
     var now = performance.now();
     var windowMs = Math.min(ROLL_MS, now - this.startTime);
-    if (windowMs < 280) return 0;
+    if (windowMs < 280) return -1;
     var cut = now - windowMs;
     var n = 0;
     var i;
@@ -1192,8 +1191,8 @@
   };
 
   Game.prototype.updateHud = function () {
-    var wpm = this.started ? this.rollingWpm() : 0;
-    $("hud-wpm").textContent = String(Math.round(wpm));
+    var wpm = this.started ? this.rollingWpm() : -1;
+    $("hud-wpm").textContent = wpm < 0 ? "—" : String(Math.round(wpm));
     $("hud-acc").textContent = Math.round(this.liveAccuracy()) + "%";
     var elapsed = this.started ? (performance.now() - this.startTime) / 1000 : 0;
     $("hud-time").textContent = elapsed.toFixed(1);
@@ -1204,6 +1203,7 @@
     if (this.finished) return;
     this.finished = true;
     this.endTime = performance.now();
+    this.player.distance = Math.max(this.player.distance, this.raceLength);
 
     var elapsed = Math.max(1, this.endTime - this.startTime);
     var minutes = elapsed / 60000;
@@ -1334,8 +1334,10 @@
     if (this.shakeT > 0) this.shakeT = Math.max(0, this.shakeT - dt);
 
     var targetWpm = 0;
-    if (this.screen === "race" && this.started && !this.finished) targetWpm = this.rollingWpm();
-    else if (this.finished) targetWpm = 8;
+    if (this.screen === "race" && this.started && !this.finished) {
+      var live = this.rollingWpm();
+      targetWpm = live < 0 ? 0 : live;
+    } else if (this.finished) targetWpm = 8;
     var penalized = targetWpm;
     if (this.penaltyT > 0) penalized *= 0.32 + 0.68 * (1 - this.penaltyT / PENALTY_S);
     var targetSpeed = speedFromWpm(penalized);

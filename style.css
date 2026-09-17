@@ -144,7 +144,7 @@ body {
 
 #track-wrap {
   position: relative;
-  height: 168px;
+  height: 210px;
   border-radius: 14px;
   overflow: hidden;
   background: linear-gradient(180deg, #0b1018 0%, #151b27 40%, #0c1118 100%);
@@ -379,11 +379,16 @@ kbd {
 
 .letter.incorrect {
   color: var(--error);
+  text-shadow: 0 0 10px rgba(255, 91, 122, 0.55);
+  text-decoration: underline;
+  text-decoration-color: var(--error);
+  text-underline-offset: 4px;
 }
 
 .letter.extra {
   color: var(--error);
-  opacity: 0.78;
+  opacity: 0.9;
+  text-decoration: underline;
 }
 
 .letter.missed {
@@ -541,7 +546,7 @@ kbd {
   }
 
   #track-wrap {
-    height: 190px;
+    height: 232px;
   }
 
   #words {
@@ -555,7 +560,7 @@ kbd {
   }
 
   #track-wrap {
-    height: 150px;
+    height: 180px;
   }
 
   #words {
